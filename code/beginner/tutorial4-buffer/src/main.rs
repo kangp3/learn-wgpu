@@ -30,8 +30,17 @@ const INDICES: &[u16] = &[
 ];
 
 fn main() {
+    cfg_if::cfg_if! {
+        if #[cfg(target_arch = "wasm32")] {
+            std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+            console_log::init_with_level(log::Level::Warn).expect("Could't initialize logger");
+        } else {
+            env_logger::init();
+        }
+    }
+
     let color = [0.5, 0.0, 0.5];
-    let vertex_pos = &vec![
+    let vertex_pos = vec![
         [-0.0868241, 0.49240386, 0.0],
         [-0.49513406, 0.06958647, 0.0],
         [-0.21918549, -0.44939706, 0.0],
@@ -43,10 +52,11 @@ fn main() {
         vertices.append(
             Vertex{
                 position: pos,
-                color: color,
+                color,
             }
         )
     }
 
-    pollster::block_on(run());
+    let mut state = State::new(window).await;
+    pollster::block_on(state.run());
 }
